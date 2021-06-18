@@ -8,11 +8,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/twinj/uuid"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -49,9 +50,9 @@ func (s Session) ID() string {
 		return sessionIDStr.(string)
 	}
 
-	buffer := uuid.NewV4()
+	buffer := uuid.New()
 
-	s[SessionIDKey] = hex.EncodeToString(buffer.Bytes())
+	s[SessionIDKey] = hex.EncodeToString([]byte(buffer.String()))
 	return s[SessionIDKey].(string)
 }
 

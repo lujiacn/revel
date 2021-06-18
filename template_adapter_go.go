@@ -86,7 +86,9 @@ func (engine *GoEngine) ParseAndAdd(baseTemplate *TemplateView) error {
 		// Reset to default otherwise
 		engine.templateSet.Delims("", "")
 	}
+
 	templateSource := string(baseTemplate.FileBytes)
+
 	templateName := engine.ConvertPath(baseTemplate.TemplateName)
 	tpl, err := engine.templateSet.New(baseTemplate.TemplateName).Parse(templateSource)
 	if nil != err {
