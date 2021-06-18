@@ -14,12 +14,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
+	"github.com/tdewolff/minify/v2/js"
 )
 
 type Result interface {
@@ -203,6 +206,9 @@ func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer, err error) {
 
 			m := minify.New()
 			m.AddFunc("text/html", html.Minify)
+			m.AddFunc("text/css", css.Minify)
+			m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
+
 			mb, err := m.Bytes("text/html", b.Bytes())
 			if err != nil {
 				return nil, err
