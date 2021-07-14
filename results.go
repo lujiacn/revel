@@ -201,23 +201,8 @@ func (r *RenderTemplateResult) ToBytes() (b *bytes.Buffer, err error) {
 		}
 	}()
 	b = &bytes.Buffer{}
-	if err = r.renderOutput(b); err == nil {
-		if Config.BoolDefault("results.trim.html", false) {
-
-			m := minify.New()
-			m.AddFunc("text/html", html.Minify)
-			m.AddFunc("text/css", css.Minify)
-			m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
-
-			mb, err := m.Bytes("text/html", b.Bytes())
-			if err != nil {
-				return nil, err
-			}
-			//b = r.compressHtml(b)
-			b = bytes.NewBuffer(mb)
-		}
-	}
-	return
+	err = r.renderOutput(b)
+	return b, err
 }
 
 // Output the template to the writer, catch any panics and return as an error
@@ -228,7 +213,33 @@ func (r *RenderTemplateResult) renderOutput(wr io.Writer) (err error) {
 			err = fmt.Errorf("Template Execution Panic in %s:\n%s", r.Template.Name(), rerr)
 		}
 	}()
-	err = r.Template.Render(wr, r.ViewArgs)
+
+	isTrim := Config.BoolDefault("results.trim.html", false)
+	if !isTrim {
+		err = r.Template.Render(wr, r.ViewArgs)
+		return
+	}
+
+	b := &bytes.Buffer{}
+	err = r.Template.Render(b, r.ViewArgs)
+	if err != nil {
+		return
+	}
+
+	m := minify.New()
+	m.AddFunc("text/html", html.Minify)
+	m.AddFunc("text/css", css.Minify)
+	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
+
+	mb, err := m.Bytes("text/html", b.Bytes())
+	if err != nil {
+		return err
+	}
+	//b = r.compressHtml(b)
+	b = bytes.NewBuffer(mb)
+
+	_, err = b.WriteTo(wr)
+
 	return
 }
 
